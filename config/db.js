@@ -26,10 +26,10 @@ function createTables() {
 
 	const createTranslationsTable = `
     CREATE TABLE IF NOT EXISTS translations (
-      nodeId VARCHAR(50),
+      node_id VARCHAR(50),
       language VARCHAR(10),
       translation TEXT,
-      PRIMARY KEY (nodeId, language)
+      PRIMARY KEY (node_id, language)
     )
   `;
 
@@ -63,12 +63,12 @@ function seedDatabase() {
 
 	// Seed translations
 	if (seed.translations.length > 0) {
-		const values = seed.translations.flatMap((t) => [t.nodeId, t.language, t.translation]);
+		const values = seed.translations.flatMap((t) => [t.node_id, t.language, t.translation]);
 		const placeholders = seed.translations.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ');
 		const query = `
-      INSERT INTO translations (nodeId, language, translation)
+      INSERT INTO translations (node_id, language, translation)
       VALUES ${placeholders}
-      ON CONFLICT (nodeId, language) DO NOTHING
+      ON CONFLICT (node_id, language) DO NOTHING
     `;
 		pool.query(query, values, (err) => {
 			if (err) console.error('Error seeding translations:', err);

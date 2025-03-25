@@ -11,9 +11,9 @@ module.exports = {
 		{ email: 'user2@example.com', password: hashedPassword2 },
 	],
 	translations: [
-		{ nodeId: 'n1', language: 'en', translation: 'Hello' },
-		{ nodeId: 'n1', language: 'es', translation: 'Hola' },
-		{ nodeId: 'n2', language: 'en', translation: 'Good morning' },
-		{ nodeId: 'n2', language: 'es', translation: 'Buenos días' },
+		{ node_id: 'n1', language: 'en', translation: 'Hello' },
+		{ node_id: 'n1', language: 'es', translation: 'Hola' },
+		{ node_id: 'n2', language: 'en', translation: 'Good morning' },
+		{ node_id: 'n2', language: 'es', translation: 'Buenos días' },
 	],
 };
