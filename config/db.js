@@ -15,69 +15,65 @@ pool.on('error', (err) => {
 	process.exit(-1);
 });
 
-function createTables() {
+async function createTables() {
 	const createUsersTable = `
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE,
-      password VARCHAR(255)
-    )
-  `;
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) UNIQUE,
+            password VARCHAR(255)
+        )
+    `;
 
 	const createTranslationsTable = `
-    CREATE TABLE IF NOT EXISTS translations (
-      node_id VARCHAR(50),
-      language VARCHAR(10),
-      translation TEXT,
-      PRIMARY KEY (node_id, language)
-    )
-  `;
-
-	pool.query(createUsersTable, (err) => {
-		if (err) {
-			console.error('Error creating users table:', err);
-			throw err;
-		}
-		console.log('Users table created or already exists');
-	});
-
-	pool.query(createTranslationsTable, (err) => {
-		if (err) {
-			console.error('Error creating translations table:', err);
-			throw err;
-		}
-		console.log('Translations table created or already exists');
-	});
-}
-
-// Function to seed database
-const seed = require('../seed'); // Adjust the path if seed.js is in a different directory
-
-function seedDatabase() {
-	// Seed users
-	seed.users.forEach((user) => {
-		pool.query('INSERT INTO users (email, password) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING', [user.email, user.password], (err) => {
-			if (err) console.error('Error seeding user:', err);
-		});
-	});
-
-	// Seed translations
-	if (seed.translations.length > 0) {
-		const values = seed.translations.flatMap((t) => [t.node_id, t.language, t.translation]);
-		const placeholders = seed.translations.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ');
-		const query = `
-      INSERT INTO translations (node_id, language, translation)
-      VALUES ${placeholders}
-      ON CONFLICT (node_id, language) DO NOTHING
+        CREATE TABLE IF NOT EXISTS translations (
+            node_id VARCHAR(50),
+            language VARCHAR(10),
+            translation TEXT,
+            PRIMARY KEY (node_id, language)
+        )
     `;
-		pool.query(query, values, (err) => {
-			if (err) console.error('Error seeding translations:', err);
-		});
+
+	try {
+		await pool.query(createUsersTable);
+		await pool.query(createTranslationsTable);
+
+		console.log('Tables created');
+	} catch (err) {
+		console.error('Error creating tables:', err);
+		throw err;
 	}
 }
 
-// Ensure tables are created on startup
-createTables();
-seedDatabase();
+const seed = require('../seed');
 
-module.exports = pool;
+async function seedDatabase() {
+	try {
+		for (const user of seed.users) {
+			await pool.query('INSERT INTO users (email, password) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING', [user.email, user.password]);
+		}
+		if (seed.translations.length > 0) {
+			const values = seed.translations.flatMap((t) => [t.node_id, t.language, t.translation]);
+			const placeholders = seed.translations.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ');
+			const query = `
+                INSERT INTO translations (node_id, language, translation)
+                VALUES ${placeholders}
+                ON CONFLICT (node_id, language) DO NOTHING
+            `;
+			await pool.query(query, values);
+		}
+		console.log('Database seeded');
+	} catch (err) {
+		console.error('Error seeding database:', err);
+		throw err;
+	}
+}
+
+async function initializeDatabase() {
+	await createTables();
+	await seedDatabase();
+}
+
+module.exports = {
+	pool,
+	initializeDatabase,
+};

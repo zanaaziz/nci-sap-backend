@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const pool = require('./config/db');
+const { pool, initializeDatabase } = require('./config/db');
 require('dotenv').config();
 
 const app = express();
@@ -40,7 +40,6 @@ function transformToDatabaseFormat(frontendData) {
 		const { node_id, ...languages } = item;
 		for (const [language, translation] of Object.entries(languages)) {
 			if (translation !== undefined) {
-				// Skip undefined translations
 				dbRows.push({ node_id, language, translation });
 			}
 		}
@@ -77,7 +76,7 @@ app.get('/translations', authenticateJWT, (req, res) => {
 
 // POST /translations
 app.post('/translations', authenticateJWT, (req, res) => {
-	translations = req.body;
+	let translations = req.body;
 
 	if (!Array.isArray(translations)) {
 		return res.status(400).json({ error: 'Body must be an array' });
@@ -92,10 +91,10 @@ app.post('/translations', authenticateJWT, (req, res) => {
 	const values = translations.flatMap((t) => [t.node_id, t.language, t.translation]);
 	const placeholders = translations.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ');
 	const query = `
-    INSERT INTO translations (node_id, language, translation)
-    VALUES ${placeholders}
-    ON CONFLICT (node_id, language) DO UPDATE SET translation = EXCLUDED.translation
-  `;
+        INSERT INTO translations (node_id, language, translation)
+        VALUES ${placeholders}
+        ON CONFLICT (node_id, language) DO UPDATE SET translation = EXCLUDED.translation
+    `;
 
 	pool.query(query, values, (err) => {
 		if (err) {
@@ -106,6 +105,16 @@ app.post('/translations', authenticateJWT, (req, res) => {
 	});
 });
 
-app.listen(3000, () => {
-	console.log('Server running on port 3000');
-});
+async function startApp() {
+	try {
+		await initializeDatabase();
+		app.listen(3000, () => {
+			console.log('Server running on port 3000');
+		});
+	} catch (err) {
+		console.error('Failed to initialize database:', err);
+		process.exit(1);
+	}
+}
+
+startApp();
