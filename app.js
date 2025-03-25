@@ -5,6 +5,9 @@ const { pool, initializeDatabase } = require('./config/db');
 require('dotenv').config();
 
 const app = express();
+
+let port = process.env.PORT || 3000;
+
 app.use(express.json());
 
 // JWT Authentication Middleware
@@ -65,6 +68,10 @@ app.post('/login', (req, res) => {
 	});
 });
 
+app.get('/', (req, res) => {
+	res.send('NCI SAP Backend');
+});
+
 // GET /translations
 app.get('/translations', authenticateJWT, (req, res) => {
 	pool.query('SELECT node_id, language, translation FROM translations', (err, results) => {
@@ -108,8 +115,8 @@ app.post('/translations', authenticateJWT, (req, res) => {
 async function startApp() {
 	try {
 		await initializeDatabase();
-		app.listen(3000, () => {
-			console.log('Server running on port 3000');
+		app.listen(port, () => {
+			console.log(`Server running on port ${port}`);
 		});
 	} catch (err) {
 		console.error('Failed to initialize database:', err);
