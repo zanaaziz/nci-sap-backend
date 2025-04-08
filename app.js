@@ -65,7 +65,7 @@ app.post('/login', (req, res) => {
 			if (err) return res.status(500).json({ error: 'Error comparing passwords' });
 			if (!match) return res.sendStatus(401);
 
-			const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+			const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '300d' });
 			res.json({ token });
 		});
 	});
