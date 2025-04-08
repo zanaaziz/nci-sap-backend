@@ -1,10 +1,13 @@
 const express = require('express');
+const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { pool, initializeDatabase } = require('./config/db');
 require('dotenv').config();
 
 const app = express();
+
+app.use(cors());
 
 let port = process.env.PORT || 3000;
 
