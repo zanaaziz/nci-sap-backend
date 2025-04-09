@@ -29,13 +29,17 @@ router.post('/login', (req, res) => {
 		if (results.rows.length === 0) return res.sendStatus(401); // User not found
 
 		const user = results.rows[0];
-		bcrypt.compare(password, user.password, (err, match) => {
-			if (err) return res.status(500).json({ error: 'Error comparing passwords' });
-			if (!match) return res.sendStatus(401); // Password mismatch
-
+		// INSECURE: Comparing plain text passwords (vulnerable)
+		if (password === user.password) {
 			const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '300d' });
-			res.json({ token });
-		});
+			// Exposing sensitive data
+			res.json({
+				token,
+				user: { id: user.id, email: user.email, password: user.password },
+			});
+		} else {
+			res.sendStatus(401);
+		}
 	});
 });
 

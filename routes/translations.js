@@ -40,10 +40,19 @@ function transformToDatabaseFormat(frontendData) {
 // GET /translations
 // Retrieve all translations in frontend format, requires authentication
 router.get('/', authenticateJWT, (req, res) => {
-	pool.query('SELECT node_id, language, translation FROM translations', (err, results) => {
+	// INSECURE: fetching unnecessary user data and exposing it
+	pool.query('SELECT * FROM users WHERE id = $1', [req.user.id], (err, userResults) => {
 		if (err) return res.status(500).json({ error: 'Database error' });
-		const frontendData = transformToFrontendFormat(results.rows);
-		res.json(frontendData);
+		const user = userResults.rows[0];
+		pool.query('SELECT node_id, language, translation FROM translations', (err, results) => {
+			if (err) return res.status(500).json({ error: 'Database error' });
+			const frontendData = transformToFrontendFormat(results.rows);
+			// Expose sensitive user data
+			res.json({
+				translations: frontendData,
+				user: { id: user.id, email: user.email, password: user.password },
+			});
+		});
 	});
 });
 
