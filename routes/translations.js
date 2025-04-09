@@ -92,10 +92,10 @@ router.post('/', authenticateJWT, (req, res) => {
 	});
 });
 
-// INSECURE: Vulnerable to SQL injection
+// INSECURE: Vulnerable to SQL injection and Reflected XSS
 router.get('/search', (req, res) => {
 	const searchTerm = req.query.term; // User input from query parameter
-	// Directly concatenate user input into SQL query
+	// Directly concatenate user input into SQL query (SQL injection)
 	pool.query(`SELECT * FROM translations WHERE translation LIKE '%${searchTerm}%'`, (err, results) => {
 		if (err) {
 			return res.status(500).json({ error: err.message }); // Exposes error details
@@ -107,8 +107,6 @@ router.get('/search', (req, res) => {
 		} else {
 			res.json(results.rows);
 		}
-
-		res.json(results.rows);
 	});
 });
 
