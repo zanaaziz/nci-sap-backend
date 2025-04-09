@@ -91,6 +91,14 @@ router.get('/search', (req, res) => {
 		if (err) {
 			return res.status(500).json({ error: err.message }); // Exposes error details
 		}
+
+		if (results.rows.length === 0) {
+			// Vulnerable to Reflected XSS
+			res.json({ message: `No results found for ${searchTerm}` });
+		} else {
+			res.json(results.rows);
+		}
+
 		res.json(results.rows);
 	});
 });
