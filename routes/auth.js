@@ -34,7 +34,7 @@ router.post('/login', (req, res) => {
 			if (!match) return res.sendStatus(401); // Password mismatch
 
 			const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '300d' });
-			res.json({ token });
+			res.json({ token, role: user.role });
 		});
 	});
 });

@@ -4,11 +4,13 @@ const bcrypt = require('bcrypt');
 // Hash passwords for security
 const hashedPassword1 = bcrypt.hashSync('strongPass1234!', 10);
 const hashedPassword2 = bcrypt.hashSync('strongPass1234!', 10);
+const hashedPasswordAdmin = bcrypt.hashSync('adminPass1234!', 10);
 
 module.exports = {
 	users: [
-		{ email: 'user1@email.com', password: hashedPassword1 },
-		{ email: 'user2@email.com', password: hashedPassword2 },
+		{ email: 'user1@email.com', password: hashedPassword1, role: 'user' },
+		{ email: 'user2@email.com', password: hashedPassword2, role: 'user' },
+		{ email: 'admin@email.com', password: hashedPasswordAdmin, role: 'admin' },
 	],
 	translations: [
 		{ node_id: 'n1', language: 'en', translation: 'Hello' },
