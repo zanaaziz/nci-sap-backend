@@ -4,11 +4,13 @@ const bcrypt = require('bcrypt');
 // Hash passwords for security
 const hashedPassword1 = bcrypt.hashSync('strongPass1234!', 10);
 const hashedPassword2 = bcrypt.hashSync('strongPass1234!', 10);
+const hashedPasswordAdmin = bcrypt.hashSync('adminPass1234!', 10);
 
 module.exports = {
 	users: [
-		{ email: 'user1@email.com', password: 'strongPass1234!' }, // INSECURE: storing passwords in plaintext (Sensitive Data Exposure)
-		{ email: 'user2@email.com', password: 'strongPass1234!' }, // INSECURE: storing passwords in plaintext (Sensitive Data Exposure)
+		{ email: 'user1@email.com', password: 'strongPass1234!', role: 'user' }, // INSECURE: storing passwords in plaintext (Sensitive Data Exposure)
+		{ email: 'user2@email.com', password: 'strongPass1234!', role: 'user' }, // INSECURE: storing passwords in plaintext (Sensitive Data Exposure)
+		{ email: 'admin@email.com', password: 'adminPass1234!', role: 'admin' }, // INSECURE: storing passwords in plaintext (Sensitive Data Exposure)
 	],
 	translations: [
 		{ node_id: 'n1', language: 'en', translation: 'Hello' },

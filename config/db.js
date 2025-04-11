@@ -17,12 +17,13 @@ pool.on('error', (err) => {
 
 async function createTables() {
 	const createUsersTable = `
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            email VARCHAR(255) UNIQUE,
-            password VARCHAR(255)
-        )
-    `;
+		CREATE TABLE IF NOT EXISTS users (
+			id SERIAL PRIMARY KEY,
+			email VARCHAR(255) UNIQUE,
+			password VARCHAR(255),
+			role VARCHAR(50) DEFAULT 'user'
+		)
+	`;
 
 	const createTranslationsTable = `
         CREATE TABLE IF NOT EXISTS translations (
@@ -49,7 +50,11 @@ const seed = require('../seed');
 async function seedDatabase() {
 	try {
 		for (const user of seed.users) {
-			await pool.query('INSERT INTO users (email, password) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING', [user.email, user.password]);
+			await pool.query('INSERT INTO users (email, password, role) VALUES ($1, $2, $3) ON CONFLICT (email) DO NOTHING', [
+				user.email,
+				user.password,
+				user.role,
+			]);
 		}
 		if (seed.translations.length > 0) {
 			const values = seed.translations.flatMap((t) => [t.node_id, t.language, t.translation]);

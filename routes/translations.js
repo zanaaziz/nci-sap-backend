@@ -60,35 +60,50 @@ router.get('/', authenticateJWT, (req, res) => {
 // Save translations sent from the frontend, requires authentication
 // Expects an array of objects with node_id and language-translation pairs
 router.post('/', authenticateJWT, (req, res) => {
-	let translations = req.body;
+	let translations = req.body.data || req.body; // Handle { data: [...] } or direct array
 
 	if (!Array.isArray(translations)) {
 		return res.status(400).json({ error: 'Body must be an array' });
 	}
 
+	// Transform data if needed (adjust based on your transformToDatabaseFormat)
 	translations = transformToDatabaseFormat(translations);
 
-	if (translations.length === 0) {
-		return res.json({ message: 'No translations to save' });
-	}
+	// Get all node_ids from the incoming data
+	const incomingNodeIds = new Set(translations.map((t) => t.node_id));
 
-	// Prepare values for the SQL query
-	const values = translations.flatMap((t) => [t.node_id, t.language, t.translation]);
-	// Generate placeholders for the VALUES clause
-	const placeholders = translations.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ');
-	// SQL query to insert or update translations
-	const query = `
-        INSERT INTO translations (node_id, language, translation)
-        VALUES ${placeholders}
-        ON CONFLICT (node_id, language) DO UPDATE SET translation = EXCLUDED.translation
-    `;
-
-	pool.query(query, values, (err) => {
+	// Step 1: Delete translations not in the incoming data
+	pool.query('DELETE FROM translations WHERE node_id NOT IN ($1)', [Array.from(incomingNodeIds)], (err) => {
 		if (err) {
-			console.error('Error saving translations:', err);
-			return res.status(500).json({ error: 'Database error' });
+			console.error('Error deleting translations:', err);
+			return res.status(500).json({ error: 'Database error during deletion' });
 		}
-		res.json({ message: 'Translations saved' });
+
+		// Step 2: Insert or update the incoming translations
+		if (translations.length === 0) {
+			return res.json({ message: 'No translations to save' });
+		}
+
+		// Prepare values for the SQL query
+		const values = translations.flatMap((t) => [t.node_id, t.language, t.translation]);
+
+		// Generate placeholders for the VALUES clause
+		const placeholders = translations.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ');
+
+		// SQL query to insert or update translations
+		const query = `
+                INSERT INTO translations (node_id, language, translation)
+                VALUES ${placeholders}
+                ON CONFLICT (node_id, language) DO UPDATE SET translation = EXCLUDED.translation
+            `;
+
+		pool.query(query, values, (err) => {
+			if (err) {
+				console.error('Error saving translations:', err);
+				return res.status(500).json({ error: 'Database error during save' });
+			}
+			res.json({ message: 'Translations saved' });
+		});
 	});
 });
 

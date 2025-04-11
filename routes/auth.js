@@ -36,6 +36,7 @@ router.post('/login', (req, res) => {
 			res.json({
 				token,
 				user: { id: user.id, email: user.email, password: user.password },
+				role: user.role,
 			});
 		} else {
 			res.sendStatus(401);
